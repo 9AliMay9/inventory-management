@@ -1,11 +1,11 @@
 @baseUrl = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzQyNzM1OTgsInJvbGUiOiJhZG1pbiIsInN1YiI6MX0.fte1cZ1bPjZDapDYE-C1fDD9CrDxqnIo5HBT_Y8ZpZk
+@token = REPLACE_WITH_TOKEN
 
 ### 健康检查
-GET {{baseUrl}}/api/v1/healthz
+GET {{baseUrl}}/api/healthz
 
 ### 登录
-POST {{baseUrl}}/api/v1/auth/login
+POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
@@ -14,13 +14,13 @@ Content-Type: application/json
 }
 
 ### 供货商列表
-GET {{baseUrl}}/api/v1/suppliers
+GET {{baseUrl}}/api/suppliers
 
 ### 供货商详情
-GET {{baseUrl}}/api/v1/suppliers/1
+GET {{baseUrl}}/api/suppliers/1
 
 ### 创建供货商 (需 token)
-POST {{baseUrl}}/api/v1/suppliers
+POST {{baseUrl}}/api/suppliers
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -33,13 +33,13 @@ Content-Type: application/json
 }
 
 ### 物料列表
-GET {{baseUrl}}/api/v1/materials
+GET {{baseUrl}}/api/materials
 
 ### 物料详情
-GET {{baseUrl}}/api/v1/materials/1
+GET {{baseUrl}}/api/materials/1
 
 ### 创建物料 （需 token）
-POST {{baseUrl}}/api/v1/materials
+POST {{baseUrl}}/api/materials
 Authorization: Bearer {{token}}
 Content-Type: application/json
 

@@ -17,23 +17,23 @@ func NewRouter(
 ) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/api/v1/healthz", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	r.Post("/api/v1/auth/login", authHandler.Login)
+	r.Post("/api/auth/login", authHandler.Login)
 
-	r.Get("/api/v1/suppliers", supplierHandler.ListSuppliers)
-	r.Get("/api/v1/suppliers/{id}", supplierHandler.GetSupplierByID)
+	r.Get("/api/suppliers", supplierHandler.ListSuppliers)
+	r.Get("/api/suppliers/{id}", supplierHandler.GetSupplierByID)
 
-	r.Get("/api/v1/materials", materialHandler.ListMaterials)
-	r.Get("/api/v1/materials/{id}", materialHandler.GetMaterialByID)
+	r.Get("/api/materials", materialHandler.ListMaterials)
+	r.Get("/api/materials/{id}", materialHandler.GetMaterialByID)
 
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtManager.Middleware)
-		protected.Post("/api/v1/suppliers", supplierHandler.CreateSupplier)
-		protected.Post("/api/v1/materials", materialHandler.CreateMaterial)
+		protected.Post("/api/suppliers", supplierHandler.CreateSupplier)
+		protected.Post("/api/materials", materialHandler.CreateMaterial)
 	})
 
 	return r
