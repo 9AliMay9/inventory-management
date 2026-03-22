@@ -1,0 +1,92 @@
+package handler
+
+import (
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
+
+	"inventory-management/internal/repository"
+)
+
+type MaterialHandler struct {
+	q *repository.Queries
+}
+
+type createMaterialRequest struct {
+	Code          string `json:"code"`
+	Name          string `json:"name"`
+	Category      string `json:"category"`
+	Unit          string `json:"unit"`
+	Specification string `json:"specification"`
+	SupplierID    int64  `json:"supplier_id"`
+	Quantity      string `json:"quantity"`
+	MinStock      string `json:"min_stock"`
+	MaxStock      string `json:"max_stock"`
+	UnitPrice     string `json:"unit_price"`
+}
+
+func NewMaterialHandler(q *repository.Queries) *MaterialHandler {
+	return &MaterialHandler{q: q}
+}
+
+func (h *MaterialHandler) ListMaterials(w http.ResponseWriter, r *http.Request) {
+	items, err := h.q.ListMaterials(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, items)
+}
+
+func (h *MaterialHandler) GetMaterialByID(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "bad request")
+		return
+	}
+
+	item, err := h.q.GetMaterialByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, item)
+}
+
+func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request) {
+	var req createMaterialRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "bad request")
+		return
+	}
+
+	item, err := h.q.CreateMaterial(r.Context(), repository.CreateMaterialParams{
+		Code:          req.Code,
+		Name:          req.Name,
+		Category:      sql.NullString{String: req.Category, Valid: req.Category != ""},
+		Unit:          req.Unit,
+		Specification: sql.NullString{String: req.Specification, Valid: req.Specification != ""},
+		SupplierID:    sql.NullInt64{Int64: req.SupplierID, Valid: req.SupplierID != 0},
+		Quantity:      req.Quantity,
+		MinStock:      req.MinStock,
+		MaxStock:      sql.NullString{String: req.MaxStock, Valid: req.MaxStock != ""},
+		UnitPrice:     req.UnitPrice,
+		Status:        "active",
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, item)
+}

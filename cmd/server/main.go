@@ -1,0 +1,50 @@
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/joho/godotenv"
+
+	"inventory-management/internal/config"
+	"inventory-management/internal/db"
+	"inventory-management/internal/handler"
+	"inventory-management/internal/middleware"
+	"inventory-management/internal/repository"
+	"inventory-management/internal/router"
+	"inventory-management/internal/service"
+)
+
+func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sqlDB, err := db.NewDB(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = sqlDB.Close()
+	}()
+
+	q := repository.New(sqlDB)
+	jwtMgr := middleware.NewJWTManager(cfg.JWTSecret)
+	authSvc := service.NewAuthService(q, cfg.JWTSecret)
+	authHandler := handler.NewAuthHandler(authSvc)
+	supplierHandler := handler.NewSupplierHandler(q)
+	materialHandler := handler.NewMaterialHandler(q)
+
+	r := router.NewRouter(authHandler, supplierHandler, materialHandler, jwtMgr)
+
+	log.Printf("server started on: %s", cfg.ServerPort)
+
+	if err := http.ListenAndServe(":"+cfg.ServerPort, r); err != nil {
+		log.Fatal(err)
+	}
+}

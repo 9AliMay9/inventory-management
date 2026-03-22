@@ -1,0 +1,57 @@
+@baseUrl = http://localhost:8080
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzQyNzM1OTgsInJvbGUiOiJhZG1pbiIsInN1YiI6MX0.fte1cZ1bPjZDapDYE-C1fDD9CrDxqnIo5HBT_Y8ZpZk
+
+### 健康检查
+GET {{baseUrl}}/api/v1/healthz
+
+### 登录
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### 供货商列表
+GET {{baseUrl}}/api/v1/suppliers
+
+### 供货商详情
+GET {{baseUrl}}/api/v1/suppliers/1
+
+### 创建供货商 (需 token)
+POST {{baseUrl}}/api/v1/suppliers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "测试供货商",
+  "contact_person": "王五",
+  "phone": "13800000003",
+  "email": "test-supplier@example.com",
+  "address": "广州市天河区"
+}
+
+### 物料列表
+GET {{baseUrl}}/api/v1/materials
+
+### 物料详情
+GET {{baseUrl}}/api/v1/materials/1
+
+### 创建物料 （需 token）
+POST {{baseUrl}}/api/v1/materials
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "code": "MAT-004",
+  "name": "测试物料",
+  "category": "测试分类",
+  "unit": "个",
+  "specification": "标准版",
+  "supplier_id": 1,
+  "quantity": "0",
+  "min_stock": "0",
+  "max_stock": "100",
+  "unit_price": "0"
+}
