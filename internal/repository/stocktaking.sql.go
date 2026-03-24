@@ -56,6 +56,38 @@ func (q *Queries) AddStocktakingItem(ctx context.Context, arg AddStocktakingItem
 	return i, err
 }
 
+const confirmStocktaking = `-- name: ConfirmStocktaking :one
+UPDATE stocktaking
+SET
+    status = 'confirmed',
+    updated_at = NOW()
+WHERE id = $1
+    AND status = 'draft'
+RETURNING
+    id,
+    period,
+    status,
+    operator_id,
+    remark,
+    created_at,
+    updated_at
+`
+
+func (q *Queries) ConfirmStocktaking(ctx context.Context, id int64) (Stocktaking, error) {
+	row := q.db.QueryRowContext(ctx, confirmStocktaking, id)
+	var i Stocktaking
+	err := row.Scan(
+		&i.ID,
+		&i.Period,
+		&i.Status,
+		&i.OperatorID,
+		&i.Remark,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createStocktaking = `-- name: CreateStocktaking :one
 INSERT INTO stocktaking (
     period,
@@ -161,6 +193,51 @@ func (q *Queries) ListStocktaking(ctx context.Context) ([]Stocktaking, error) {
 			&i.Remark,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStocktakingItems = `-- name: ListStocktakingItems :many
+SELECT
+    id,
+    stocktaking_id,
+    material_id,
+    book_quantity,
+    actual_quantity,
+    difference,
+    created_at
+FROM stocktaking_items
+WHERE stocktaking_id = $1
+ORDER BY id
+`
+
+func (q *Queries) ListStocktakingItems(ctx context.Context, stocktakingID int64) ([]StocktakingItem, error) {
+	rows, err := q.db.QueryContext(ctx, listStocktakingItems, stocktakingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StocktakingItem
+	for rows.Next() {
+		var i StocktakingItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.StocktakingID,
+			&i.MaterialID,
+			&i.BookQuantity,
+			&i.ActualQuantity,
+			&i.Difference,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

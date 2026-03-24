@@ -13,6 +13,10 @@ func NewRouter(
 	authHandler *handler.AuthHandler,
 	supplierHandler *handler.SupplierHandler,
 	materialHandler *handler.MaterialHandler,
+	stockHandler *handler.StockHandler,
+	alertHandler *handler.AlertHandler,
+	stocktakingHandler *handler.StocktakingHandler,
+	reportHandler *handler.ReportHandler,
 	jwtManager *middleware.JWTManager,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -30,10 +34,21 @@ func NewRouter(
 	r.Get("/api/materials", materialHandler.ListMaterials)
 	r.Get("/api/materials/{id}", materialHandler.GetMaterialByID)
 
+	r.Get("/api/stock/movements", stockHandler.ListMovements)
+	r.Get("/api/alerts", alertHandler.ListAlerts)
+	r.Get("/api/stocktaking", stocktakingHandler.ListStocktaking)
+	r.Get("/api/stocktaking/{id}", stocktakingHandler.GetByID)
+	r.Get("/api/reports/monthly", reportHandler.GetMonthlyReport)
+
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtManager.Middleware)
 		protected.Post("/api/suppliers", supplierHandler.CreateSupplier)
 		protected.Post("/api/materials", materialHandler.CreateMaterial)
+		protected.Post("/api/stock/movements", stockHandler.CreateMovement)
+		protected.Post("/api/alerts/{id}/resolve", alertHandler.ResolveAlert)
+		protected.Post("/api/stocktaking", stocktakingHandler.CreateStocktaking)
+		protected.Post("/api/stocktaking/{id}/items", stocktakingHandler.AddItem)
+		protected.Post("/api/stocktaking/{id}/confirm", stocktakingHandler.Confirm)
 	})
 
 	return r

@@ -10,6 +10,7 @@ import (
 
 type Querier interface {
 	AddStocktakingItem(ctx context.Context, arg AddStocktakingItemParams) (StocktakingItem, error)
+	ConfirmStocktaking(ctx context.Context, id int64) (Stocktaking, error)
 	CreateAlert(ctx context.Context, arg CreateAlertParams) (Alert, error)
 	CreateMaterial(ctx context.Context, arg CreateMaterialParams) (Material, error)
 	CreateStockMovement(ctx context.Context, arg CreateStockMovementParams) (StockMovement, error)
@@ -24,6 +25,7 @@ type Querier interface {
 	ListMaterials(ctx context.Context) ([]Material, error)
 	ListStockMovements(ctx context.Context) ([]StockMovement, error)
 	ListStocktaking(ctx context.Context) ([]Stocktaking, error)
+	ListStocktakingItems(ctx context.Context, stocktakingID int64) ([]StocktakingItem, error)
 	ListSuppliers(ctx context.Context) ([]Supplier, error)
 	ListUnresolvedAlerts(ctx context.Context) ([]Alert, error)
 	ResolveAlert(ctx context.Context, id int64) (Alert, error)

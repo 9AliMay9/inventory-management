@@ -36,11 +36,26 @@ func main() {
 	q := repository.New(sqlDB)
 	jwtMgr := middleware.NewJWTManager(cfg.JWTSecret)
 	authSvc := service.NewAuthService(q, cfg.JWTSecret)
+	stockSvc := service.NewStockService(sqlDB, q)
+	stocktakingSvc := service.NewStocktakingService(sqlDB, q)
+
 	authHandler := handler.NewAuthHandler(authSvc)
 	supplierHandler := handler.NewSupplierHandler(q)
 	materialHandler := handler.NewMaterialHandler(q)
+	stockHandler := handler.NewStockHandler(stockSvc)
+	alertHandler := handler.NewAlertHandler(q)
+	stocktakingHandler := handler.NewStocktakingHandler(stocktakingSvc)
+	reportHandler := handler.NewReportHandler(q)
 
-	r := router.NewRouter(authHandler, supplierHandler, materialHandler, jwtMgr)
+	r := router.NewRouter(
+		authHandler,
+		supplierHandler,
+		materialHandler,
+		stockHandler,
+		alertHandler,
+		stocktakingHandler,
+		reportHandler,
+		jwtMgr)
 
 	log.Printf("server started on: %s", cfg.ServerPort)
 

@@ -39,8 +39,8 @@ ORDER BY created_at DESC, id DESC;
 SELECT
     material_id,
     movement_type,
-    SUM(quantity) AS total_quantity,
-    SUM(quantity * unit_price) AS total_amount
+    CAST(SUM(quantity) AS TEXT) AS total_quantity,
+    CAST(SUM(quantity * unit_price) AS TEXT) AS total_amount
 FROM stock_movements
 WHERE created_at >= $1
     AND created_at < $2

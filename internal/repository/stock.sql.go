@@ -74,8 +74,8 @@ const getMonthlyReport = `-- name: GetMonthlyReport :many
 SELECT
     material_id,
     movement_type,
-    SUM(quantity) AS total_quantity,
-    SUM(quantity * unit_price) AS total_amount
+    CAST(SUM(quantity) AS TEXT) AS total_quantity,
+    CAST(SUM(quantity * unit_price) AS TEXT) AS total_amount
 FROM stock_movements
 WHERE created_at >= $1
     AND created_at < $2
@@ -91,8 +91,8 @@ type GetMonthlyReportParams struct {
 type GetMonthlyReportRow struct {
 	MaterialID    int64  `json:"material_id"`
 	MovementType  string `json:"movement_type"`
-	TotalQuantity int64  `json:"total_quantity"`
-	TotalAmount   int64  `json:"total_amount"`
+	TotalQuantity string `json:"total_quantity"`
+	TotalAmount   string `json:"total_amount"`
 }
 
 func (q *Queries) GetMonthlyReport(ctx context.Context, arg GetMonthlyReportParams) ([]GetMonthlyReportRow, error) {

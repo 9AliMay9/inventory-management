@@ -58,3 +58,32 @@ SELECT
 FROM stocktaking
 WHERE id = $1
 LIMIT 1;
+
+-- name: ConfirmStocktaking :one
+UPDATE stocktaking
+SET
+    status = 'confirmed',
+    updated_at = NOW()
+WHERE id = $1
+    AND status = 'draft'
+RETURNING
+    id,
+    period,
+    status,
+    operator_id,
+    remark,
+    created_at,
+    updated_at;
+
+-- name: ListStocktakingItems :many
+SELECT
+    id,
+    stocktaking_id,
+    material_id,
+    book_quantity,
+    actual_quantity,
+    difference,
+    created_at
+FROM stocktaking_items
+WHERE stocktaking_id = $1
+ORDER BY id;
