@@ -70,6 +70,71 @@ func (q *Queries) CreateStockMovement(ctx context.Context, arg CreateStockMoveme
 	return i, err
 }
 
+const filterMovements = `-- name: FilterMovements :many
+SELECT
+    id,
+    material_id,
+    movement_type,
+    quantity,
+    unit_price,
+    reference_no,
+    remark,
+    operator_id,
+    created_at
+FROM stock_movements
+WHERE
+    ($1::bigint IS NULL OR material_id = $1::bigint)
+    AND ($2::text IS NULL OR movement_type = $2::text)
+    AND ($3::timestamptz IS NULL OR created_at >= $3::timestamptz)
+    AND ($4::timestamptz IS NULL OR created_at < $4::timestamptz)
+ORDER BY created_at DESC, id DESC
+`
+
+type FilterMovementsParams struct {
+	MaterialID   sql.NullInt64  `json:"material_id"`
+	MovementType sql.NullString `json:"movement_type"`
+	CreatedFrom  sql.NullTime   `json:"created_from"`
+	CreatedTo    sql.NullTime   `json:"created_to"`
+}
+
+func (q *Queries) FilterMovements(ctx context.Context, arg FilterMovementsParams) ([]StockMovement, error) {
+	rows, err := q.db.QueryContext(ctx, filterMovements,
+		arg.MaterialID,
+		arg.MovementType,
+		arg.CreatedFrom,
+		arg.CreatedTo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StockMovement
+	for rows.Next() {
+		var i StockMovement
+		if err := rows.Scan(
+			&i.ID,
+			&i.MaterialID,
+			&i.MovementType,
+			&i.Quantity,
+			&i.UnitPrice,
+			&i.ReferenceNo,
+			&i.Remark,
+			&i.OperatorID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getMonthlyReport = `-- name: GetMonthlyReport :many
 SELECT
     material_id,

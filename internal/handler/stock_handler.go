@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
+	"time"
 
 	"inventory-management/internal/middleware"
 	"inventory-management/internal/repository"
@@ -68,19 +70,57 @@ func (h *StockHandler) CreateMovement(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusCreated, item)
+	writeJSON(w, http.StatusCreated, toMovementResp(item))
 }
 
 func (h *StockHandler) ListMovements(w http.ResponseWriter, r *http.Request) {
-	items, err := h.svc.ListMovements(r.Context())
+	query := r.URL.Query()
+	materialIDText := query.Get("material_id")
+	movementType := query.Get("movement_type")
+	fromText := query.Get("from")
+	toText := query.Get("to")
+
+	params := repository.FilterMovementsParams{
+		MovementType: sql.NullString{String: movementType, Valid: movementType != ""},
+	}
+
+	if materialIDText != "" {
+		materialID, err := strconv.ParseInt(materialIDText, 10, 64)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "bad request")
+			return
+		}
+		params.MaterialID = sql.NullInt64{Int64: materialID, Valid: true}
+	}
+
+	if fromText != "" {
+		fromTime, err := time.Parse("2006-01-02", fromText)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "bad request")
+			return
+		}
+		params.CreatedFrom = sql.NullTime{Time: fromTime, Valid: true}
+	}
+
+	if toText != "" {
+		toTime, err := time.Parse("2006-01-02", toText)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "bad request")
+			return
+		}
+		params.CreatedTo = sql.NullTime{Time: toTime.AddDate(0, 0, 1), Valid: true}
+	}
+
+	items, err := h.svc.FilterMovements(r.Context(), params)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	if items == nil {
-		items = []repository.StockMovement{}
+	resp := make([]movementResp, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toMovementResp(item))
 	}
 
-	writeJSON(w, http.StatusOK, items)
+	writeJSON(w, http.StatusOK, resp)
 }

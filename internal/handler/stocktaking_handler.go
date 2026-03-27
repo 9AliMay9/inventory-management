@@ -48,6 +48,10 @@ func (h *StocktakingHandler) CreateStocktaking(w http.ResponseWriter, r *http.Re
 		writeError(w, http.StatusBadRequest, "period is required")
 		return
 	}
+	if len(req.Period) > 20 {
+		writeError(w, http.StatusBadRequest, "period exceeds maximum length of 20")
+		return
+	}
 
 	item, err := h.svc.CreateStocktaking(r.Context(), req.Period, req.Remark, operatorID)
 	if err != nil {
@@ -55,7 +59,7 @@ func (h *StocktakingHandler) CreateStocktaking(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, item)
+	writeJSON(w, http.StatusCreated, toStocktakingResp(item))
 }
 
 func (h *StocktakingHandler) AddItem(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +99,7 @@ func (h *StocktakingHandler) AddItem(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusCreated, item)
+	writeJSON(w, http.StatusCreated, toStocktakingItemResp(item))
 }
 
 func (h *StocktakingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +127,7 @@ func (h *StocktakingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusOK, item)
+	writeJSON(w, http.StatusOK, toStocktakingResp(item))
 }
 
 func (h *StocktakingHandler) ListStocktaking(w http.ResponseWriter, r *http.Request) {
@@ -132,11 +136,13 @@ func (h *StocktakingHandler) ListStocktaking(w http.ResponseWriter, r *http.Requ
 		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	if items == nil {
-		items = []repository.Stocktaking{}
+
+	resp := make([]stocktakingResp, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toStocktakingResp(item))
 	}
 
-	writeJSON(w, http.StatusOK, items)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *StocktakingHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -156,5 +162,5 @@ func (h *StocktakingHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, item)
+	writeJSON(w, http.StatusOK, toStocktakingResp(item))
 }

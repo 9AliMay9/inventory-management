@@ -17,6 +17,7 @@ func NewRouter(
 	alertHandler *handler.AlertHandler,
 	stocktakingHandler *handler.StocktakingHandler,
 	reportHandler *handler.ReportHandler,
+	userHandler *handler.UserHandler,
 	jwtManager *middleware.JWTManager,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -49,6 +50,19 @@ func NewRouter(
 		protected.Post("/api/stocktaking", stocktakingHandler.CreateStocktaking)
 		protected.Post("/api/stocktaking/{id}/items", stocktakingHandler.AddItem)
 		protected.Post("/api/stocktaking/{id}/confirm", stocktakingHandler.Confirm)
+	})
+
+	r.Group(func(loggedIn chi.Router) {
+		loggedIn.Use(jwtManager.Middleware)
+		loggedIn.Get("/api/users", userHandler.ListUsers)
+		loggedIn.Patch("/api/users/{id}/password", userHandler.UpdatePassword)
+	})
+
+	r.Group(func(adminOnly chi.Router) {
+		adminOnly.Use(jwtManager.Middleware)
+		adminOnly.Use(middleware.RequireRole("admin"))
+		adminOnly.Post("/api/users", userHandler.CreateUser)
+		adminOnly.Patch("/api/users/{id}/role", userHandler.UpdateRole)
 	})
 
 	return r

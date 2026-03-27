@@ -93,3 +93,18 @@ func RoleFromCtx(ctx context.Context) (string, bool) {
 	v, ok := ctx.Value(roleKey).(string)
 	return v, ok
 }
+
+func RequireRole(role string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userRole, ok := RoleFromCtx(r.Context())
+			if !ok || userRole != role {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`{"error":"forbidden"}`))
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}

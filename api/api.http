@@ -9,8 +9,8 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "username": "admin",
-  "password": "admin123"
+  "username": "w7x_stuff01",
+  "password": "12345"
 }
 
 ### 供货商列表
@@ -25,18 +25,24 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "name": "TEST-SUPPLIER-20260324-A",
-  "contact_person": "赵六六",
-  "phone": "13800000006",
-  "email": "ftest-supplier@example.com",
-  "address": "广州市天河区"
+  "name": "W7X-EmptyContact-Supplier",
+  "contact_person": "",
+  "phone": "13900000012",
+  "email": "w7x-s2@example.com",
+  "address": "杭州市西湖区"
 }
 
-### 物料列表
+### 物料列表（全量）
 GET {{baseUrl}}/api/materials
 
+### 物料列表（按名称模糊过滤）
+GET {{baseUrl}}/api/materials?name=无分类
+
+### 物料列表（按类别 + 供货商）
+GET {{baseUrl}}/api/materials?name=不存在
+
 ### 物料详情
-GET {{baseUrl}}/api/materials/5
+GET {{baseUrl}}/api/materials/6
 
 ### 创建物料 （需 token）
 POST {{baseUrl}}/api/materials
@@ -44,16 +50,16 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "code": "MAT-T6-A",
-  "name": "阶段6终测物料A",
+  "code": "W7X-MAT-D",
+  "name": "W7X联动物料D",
   "category": "测试分类",
-  "unit": "pcs",
-  "specification": "for-final-test",
-  "supplier_id": 1,
-  "quantity": "50",
-  "min_stock": "10",
-  "max_stock": "100",
-  "unit_price": "8.00"
+  "unit": "box",
+  "specification": "LINK-D",
+  "supplier_id": 5,
+  "quantity": "10.00",
+  "min_stock": "10.00",
+  "max_stock": "50.00",
+  "unit_price": "9.00"
 }
 
 ### 出入库 - 入库
@@ -62,22 +68,28 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "material_id": 5,
+  "material_id": 6,
   "movement_type": "IN",
-  "quantity": "73.00",
-  "unit_price": "8.00",
-  "reference_no": "TEST-IN-OVERSTOCK-01",
-  "remark": "应触发高库存预警"
+  "quantity": "60.00",
+  "unit_price": "12.50",
+  "reference_no": "W7X-IN-A-HIGH",
+  "remark": "触发高库存预警"
 }
 
-### 出入库列表
+### 出入库列表（全量）
 GET {{baseUrl}}/api/stock/movements
+
+### 出入库列表（按物料 + 类型）
+GET {{baseUrl}}/api/stock/movements?movement_type=OUT
+
+### 出入库列表（按日期范围）
+GET {{baseUrl}}/api/stock/movements?from=2026-03-24&to=2026-03-23
 
 ### 预警列表
 GET {{baseUrl}}/api/alerts
 
 ### 解决预警
-POST {{baseUrl}}/api/alerts/8/resolve
+POST {{baseUrl}}/api/alerts/10/resolve
 Authorization: Bearer {{token}}
 
 ### 创建盘点单
@@ -90,26 +102,69 @@ Content-Type: application/json
   "remark": "盘点导致高库存补测"
 }
 
-### 录入盘点明细
-POST {{baseUrl}}/api/stocktaking/4/items
+### 创建盘点单（超长 period，应返还 400）
+POST {{baseUrl}}/api/stocktaking
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "material_id": 5,
-  "book_quantity": "80.00",
+  "period": "2026-03-w7x-hi",
+  "remark": "补测盘点高库存预警"
+}
+
+### 录入盘点明细
+POST {{baseUrl}}/api/stocktaking/6/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "material_id": 6,
+  "book_quantity": "82.00",
   "actual_quantity": "85.00"
 }
 
 ### 确认盘点
-POST {{baseUrl}}/api/stocktaking/4/confirm
+POST {{baseUrl}}/api/stocktaking/6/confirm
 Authorization: Bearer {{token}}
 
 ### 盘点列表
 GET {{baseUrl}}/api/stocktaking
 
 ### 盘点详情
-GET {{baseUrl}}/api/stocktaking/3
+GET {{baseUrl}}/api/stocktaking/4
 
 ### 月底结存
 GET {{baseUrl}}/api/reports/monthly?year=2026&month=3
+
+### 创建用户 （需 admin token）
+POST {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "w7x_stuff02",
+  "password": "12345",
+  "role": "staff"
+}
+
+### 列出用户（需 token）
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+
+### 修改用户角色（需 admin token）
+PATCH {{baseUrl}}/api/users/1/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "staff"
+}
+
+### 修改密码 （本人或 admin token）
+PATCH {{baseUrl}}/api/users/4/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "new_password": "54321"
+}

@@ -26,11 +26,12 @@ func (h *AlertHandler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if items == nil {
-		items = []repository.Alert{}
+	resp := make([]alertResp, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toAlertResp(item))
 	}
 
-	writeJSON(w, http.StatusOK, items)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *AlertHandler) ResolveAlert(w http.ResponseWriter, r *http.Request) {
@@ -50,5 +51,5 @@ func (h *AlertHandler) ResolveAlert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, item)
+	writeJSON(w, http.StatusOK, toAlertResp(item))
 }

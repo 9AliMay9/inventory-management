@@ -35,7 +35,12 @@ func (h *SupplierHandler) ListSuppliers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	writeJSON(w, http.StatusOK, items)
+	resp := make([]supplierResp, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toSupplierResp(item))
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *SupplierHandler) GetSupplierByID(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +60,7 @@ func (h *SupplierHandler) GetSupplierByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, item)
+	writeJSON(w, http.StatusOK, toSupplierResp(item))
 }
 
 func (h *SupplierHandler) CreateSupplier(w http.ResponseWriter, r *http.Request) {
@@ -77,5 +82,5 @@ func (h *SupplierHandler) CreateSupplier(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, item)
+	writeJSON(w, http.StatusCreated, toSupplierResp(item))
 }

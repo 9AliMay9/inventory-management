@@ -1,22 +1,3 @@
--- name: ListMaterials :many
-SELECT
-    id,
-    code,
-    name,
-    category,
-    unit,
-    specification,
-    supplier_id,
-    quantity,
-    min_stock,
-    max_stock,
-    unit_price,
-    status,
-    created_at,
-    updated_at
-FROM materials
-ORDER BY id DESC;
-
 -- name: GetMaterialByID :one
 SELECT
     id,
@@ -90,3 +71,26 @@ RETURNING
     status,
     created_at,
     updated_at;
+
+-- name: FilterMaterials :many
+SELECT
+    id,
+    code,
+    name,
+    category,
+    unit,
+    specification,
+    supplier_id,
+    quantity,
+    min_stock,
+    max_stock,
+    unit_price,
+    status,
+    created_at,
+    updated_at
+FROM materials
+WHERE
+    (sqlc.narg(name)::text IS NULL OR name ILIKE '%' || sqlc.narg(name)::text || '%')
+    AND (sqlc.narg(category)::text IS NULL OR category = sqlc.narg(category)::text)
+    AND (sqlc.narg(supplier_id)::bigint IS NULL OR supplier_id = sqlc.narg(supplier_id)::bigint)
+ORDER BY id DESC;

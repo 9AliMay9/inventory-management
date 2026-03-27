@@ -91,6 +91,74 @@ func (q *Queries) CreateMaterial(ctx context.Context, arg CreateMaterialParams) 
 	return i, err
 }
 
+const filterMaterials = `-- name: FilterMaterials :many
+SELECT
+    id,
+    code,
+    name,
+    category,
+    unit,
+    specification,
+    supplier_id,
+    quantity,
+    min_stock,
+    max_stock,
+    unit_price,
+    status,
+    created_at,
+    updated_at
+FROM materials
+WHERE
+    ($1::text IS NULL OR name ILIKE '%' || $1::text || '%')
+    AND ($2::text IS NULL OR category = $2::text)
+    AND ($3::bigint IS NULL OR supplier_id = $3::bigint)
+ORDER BY id DESC
+`
+
+type FilterMaterialsParams struct {
+	Name       sql.NullString `json:"name"`
+	Category   sql.NullString `json:"category"`
+	SupplierID sql.NullInt64  `json:"supplier_id"`
+}
+
+func (q *Queries) FilterMaterials(ctx context.Context, arg FilterMaterialsParams) ([]Material, error) {
+	rows, err := q.db.QueryContext(ctx, filterMaterials, arg.Name, arg.Category, arg.SupplierID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Material
+	for rows.Next() {
+		var i Material
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Category,
+			&i.Unit,
+			&i.Specification,
+			&i.SupplierID,
+			&i.Quantity,
+			&i.MinStock,
+			&i.MaxStock,
+			&i.UnitPrice,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getMaterialByID = `-- name: GetMaterialByID :one
 SELECT
     id,
@@ -132,64 +200,6 @@ func (q *Queries) GetMaterialByID(ctx context.Context, id int64) (Material, erro
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const listMaterials = `-- name: ListMaterials :many
-SELECT
-    id,
-    code,
-    name,
-    category,
-    unit,
-    specification,
-    supplier_id,
-    quantity,
-    min_stock,
-    max_stock,
-    unit_price,
-    status,
-    created_at,
-    updated_at
-FROM materials
-ORDER BY id DESC
-`
-
-func (q *Queries) ListMaterials(ctx context.Context) ([]Material, error) {
-	rows, err := q.db.QueryContext(ctx, listMaterials)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Material
-	for rows.Next() {
-		var i Material
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Name,
-			&i.Category,
-			&i.Unit,
-			&i.Specification,
-			&i.SupplierID,
-			&i.Quantity,
-			&i.MinStock,
-			&i.MaxStock,
-			&i.UnitPrice,
-			&i.Status,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const updateMaterialQuantity = `-- name: UpdateMaterialQuantity :one

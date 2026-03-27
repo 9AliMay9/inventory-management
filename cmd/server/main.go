@@ -46,6 +46,7 @@ func main() {
 	alertHandler := handler.NewAlertHandler(q)
 	stocktakingHandler := handler.NewStocktakingHandler(stocktakingSvc)
 	reportHandler := handler.NewReportHandler(q)
+	userHandler := handler.NewUserHandler(q)
 
 	r := router.NewRouter(
 		authHandler,
@@ -55,7 +56,9 @@ func main() {
 		alertHandler,
 		stocktakingHandler,
 		reportHandler,
-		jwtMgr)
+		userHandler,
+		jwtMgr,
+	)
 
 	log.Printf("server started on: %s", cfg.ServerPort)
 

@@ -123,8 +123,11 @@ func (s *StockService) CreateMovement(
 	return movement, nil
 }
 
-func (s *StockService) ListMovements(ctx context.Context) ([]repository.StockMovement, error) {
-	return s.q.ListStockMovements(ctx)
+func (s *StockService) FilterMovements(
+	ctx context.Context,
+	params repository.FilterMovementsParams,
+) ([]repository.StockMovement, error) {
+	return s.q.FilterMovements(ctx, params)
 }
 
 func tryCreateAlerts(

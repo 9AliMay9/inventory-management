@@ -34,13 +34,37 @@ func NewMaterialHandler(q *repository.Queries) *MaterialHandler {
 }
 
 func (h *MaterialHandler) ListMaterials(w http.ResponseWriter, r *http.Request) {
-	items, err := h.q.ListMaterials(r.Context())
+	query := r.URL.Query()
+	name := query.Get("name")
+	category := query.Get("category")
+	supplierIDText := query.Get("supplier_id")
+
+	params := repository.FilterMaterialsParams{
+		Name:     sql.NullString{String: name, Valid: name != ""},
+		Category: sql.NullString{String: category, Valid: category != ""},
+	}
+
+	if supplierIDText != "" {
+		supplierID, err := strconv.ParseInt(supplierIDText, 10, 64)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "bad request")
+			return
+		}
+		params.SupplierID = sql.NullInt64{Int64: supplierID, Valid: true}
+	}
+
+	items, err := h.q.FilterMaterials(r.Context(), params)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, items)
+	resp := make([]materialResp, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toMaterialResp(item))
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *MaterialHandler) GetMaterialByID(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +84,7 @@ func (h *MaterialHandler) GetMaterialByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, item)
+	writeJSON(w, http.StatusOK, toMaterialResp(item))
 }
 
 func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request) {
@@ -88,5 +112,5 @@ func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, item)
+	writeJSON(w, http.StatusCreated, toMaterialResp(item))
 }

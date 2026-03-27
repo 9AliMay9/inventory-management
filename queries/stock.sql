@@ -46,3 +46,22 @@ WHERE created_at >= $1
     AND created_at < $2
 GROUP BY material_id, movement_type
 ORDER BY material_id, movement_type;
+
+-- name: FilterMovements :many
+SELECT
+    id,
+    material_id,
+    movement_type,
+    quantity,
+    unit_price,
+    reference_no,
+    remark,
+    operator_id,
+    created_at
+FROM stock_movements
+WHERE
+    (sqlc.narg(material_id)::bigint IS NULL OR material_id = sqlc.narg(material_id)::bigint)
+    AND (sqlc.narg(movement_type)::text IS NULL OR movement_type = sqlc.narg(movement_type)::text)
+    AND (sqlc.narg(created_from)::timestamptz IS NULL OR created_at >= sqlc.narg(created_from)::timestamptz)
+    AND (sqlc.narg(created_to)::timestamptz IS NULL OR created_at < sqlc.narg(created_to)::timestamptz)
+ORDER BY created_at DESC, id DESC;
