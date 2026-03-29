@@ -18,7 +18,7 @@
 ## 技术栈
 
 **后端**
-- Go 1.26+ · [chi v5](https://github.com/go-chi/chi) · PostgreSQL（pgx/v5）· JWT（golang-jwt/v5）· godotenv · golang-migrate
+- Go 1.26+ · [chi v5](https://github.com/go-chi/chi) · PostgreSQL（pgx/v5）· JWT（golang-jwt/v5）· godotenv · golang-migrate · sqlc
 
 **前端**
 - React 19 · TypeScript 5.9 · Vite 8 · Tailwind CSS v4 · shadcn/ui · React Router v7 · Zustand v5 · react-i18next · Axios · lucide-react
@@ -39,20 +39,30 @@
 inventory-management/
 ├── cmd/server/main.go      # 程序入口
 ├── internal/
-│   ├── handler/            # HTTP 处理器
-│   ├── middleware/         # JWT 认证、CORS、日志
-│   ├── model/              # 领域结构体
-│   ├── repository/         # PostgreSQL 查询（pgx/v5）
+│   ├── config/             # 环境配置加载
+│   ├── db/                 # pgx 连接池
+│   ├── handler/            # HTTP 处理器 + DTO
+│   ├── middleware/         # JWT 认证
+│   ├── repository/         # sqlc 生成的查询代码
+│   ├── router/             # chi 路由注册 + SPA fallback
 │   └── service/            # 业务逻辑
-├── migrations/             # SQL 迁移文件
+├── queries/                # sqlc SQL 源文件
+├── migrations/             # golang-migrate SQL 迁移文件
+├── api/api.http            # HTTP 请求示例
 ├── docs/images/            # README 截图资源
 ├── embed.go                # go:embed all:web/dist
+├── sqlc.yaml
+├── Makefile
 ├── web/                    # 前端源码
 │   ├── src/
+│   │   ├── api/            # Axios 客户端 + 请求函数
 │   │   ├── components/     # 应用壳 + shadcn/ui 组件
-│   │   ├── pages/          # 路由页面组件
 │   │   ├── i18n/           # en / zh-CN 翻译文件
-│   │   └── store/          # Zustand 认证状态
+│   │   ├── layouts/        # 路由布局包装器
+│   │   ├── lib/            # 工具函数
+│   │   ├── pages/          # 路由页面组件
+│   │   ├── store/          # Zustand 认证状态
+│   │   └── types/          # 共享 TypeScript 类型
 │   └── vite.config.ts
 └── go.mod
 ```
@@ -65,10 +75,10 @@ inventory-management/
 # 1. 克隆并配置
 git clone https://github.com/your-username/inventory-management.git
 cd inventory-management
-cp .env.example .env        # 填写 DB_DSN、JWT_SECRET、PORT 等
+cp .env.example .env        # 填写 DB_HOST、DB_PORT、DB_USER、DB_PASSWORD、DB_NAME、JWT_SECRET 等
 
 # 2. 执行数据库迁移
-migrate -path ./migrations -database "$DATABASE_URL" up
+make migrate-up
 
 # 3. 构建前端
 cd web && pnpm install && pnpm build && cd ..
@@ -92,14 +102,15 @@ cd web && pnpm dev
 
 | 模块 | 接口 |
 |------|------|
-| 认证 | `POST /api/auth/login` · `POST /api/auth/logout` |
-| 供货商 | `GET/POST /api/suppliers` · `PUT/DELETE /api/suppliers/{id}` |
-| 物料 | `GET/POST /api/materials` · `GET/PUT/DELETE /api/materials/{id}` |
-| 出入库 | `GET/POST /api/movements` |
-| 预警 | `GET /api/alerts` · `PATCH /api/alerts/{id}/resolve` |
-| 盘点 | `GET/POST /api/stocktaking` · `GET /api/stocktaking/{id}` · `GET/POST /api/stocktaking/{id}/items` |
+| 健康检查 | `GET /api/healthz` |
+| 认证 | `POST /api/auth/login` |
+| 供货商 | `GET /api/suppliers` · `GET /api/suppliers/{id}` · `POST /api/suppliers` |
+| 物料 | `GET /api/materials` · `GET /api/materials/{id}` · `POST /api/materials` |
+| 出入库 | `GET /api/stock/movements` · `POST /api/stock/movements` |
+| 预警 | `GET /api/alerts` · `POST /api/alerts/{id}/resolve` |
+| 盘点 | `GET/POST /api/stocktaking` · `GET /api/stocktaking/{id}` · `GET/POST /api/stocktaking/{id}/items` · `POST /api/stocktaking/{id}/confirm` |
 | 报表 | `GET /api/reports/monthly` |
-| 用户 | `GET/POST /api/users` · `DELETE /api/users/{id}` *(仅 Admin)* |
+| 用户 | `GET /api/users` · `PATCH /api/users/{id}/password` · `POST /api/users` *(仅 Admin)* |
 
 ## 许可证
 

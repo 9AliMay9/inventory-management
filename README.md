@@ -39,20 +39,30 @@ A full-stack inventory management application — Go backend and React frontend 
 inventory-management/
 ├── cmd/server/main.go      # Entry point
 ├── internal/
-│   ├── handler/            # HTTP handlers
-│   ├── middleware/         # JWT auth, CORS, logger
-│   ├── model/              # Domain structs
-│   ├── repository/         # PostgreSQL queries (pgx/v5)
+│   ├── config/             # Env config loader
+│   ├── db/                 # pgx connection pool
+│   ├── handler/            # HTTP handlers + DTOs
+│   ├── middleware/         # JWT auth
+│   ├── repository/         # sqlc-generated query code
+│   ├── router/             # chi router setup + SPA fallback
 │   └── service/            # Business logic
-├── migrations/             # SQL migration files
+├── queries/                # sqlc SQL source files
+├── migrations/             # golang-migrate SQL files
+├── api/api.http            # HTTP request samples
 ├── docs/images/            # README screenshots
 ├── embed.go                # go:embed all:web/dist
+├── sqlc.yaml
+├── Makefile
 ├── web/                    # Frontend source
 │   ├── src/
+│   │   ├── api/            # Axios client + request functions
 │   │   ├── components/     # App shell + shadcn/ui components
-│   │   ├── pages/          # Route-level page components
 │   │   ├── i18n/           # en / zh-CN translation files
-│   │   └── store/          # Zustand auth store
+│   │   ├── layouts/        # Route layout wrappers
+│   │   ├── lib/            # Utility helpers
+│   │   ├── pages/          # Route-level page components
+│   │   ├── store/          # Zustand auth store
+│   │   └── types/          # Shared TypeScript types
 │   └── vite.config.ts
 └── go.mod
 ```
@@ -65,10 +75,10 @@ inventory-management/
 # 1. Clone and configure
 git clone https://github.com/your-username/inventory-management.git
 cd inventory-management
-cp .env.example .env        # set DB_DSN, JWT_SECRET, PORT, etc.
+cp .env.example .env        # set DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, JWT_SECRET, etc.
 
 # 2. Run database migrations
-migrate -path ./migrations -database "$DATABASE_URL" up
+make migrate-up
 
 # 3. Build frontend
 cd web && pnpm install && pnpm build && cd ..
@@ -92,14 +102,15 @@ cd web && pnpm dev
 
 | Group | Endpoints |
 |-------|-----------|
-| Auth | `POST /api/auth/login` · `POST /api/auth/logout` |
-| Suppliers | `GET/POST /api/suppliers` · `PUT/DELETE /api/suppliers/{id}` |
-| Materials | `GET/POST /api/materials` · `GET/PUT/DELETE /api/materials/{id}` |
-| Movements | `GET/POST /api/movements` |
-| Alerts | `GET /api/alerts` · `PATCH /api/alerts/{id}/resolve` |
-| Stocktaking | `GET/POST /api/stocktaking` · `GET /api/stocktaking/{id}` · `GET/POST /api/stocktaking/{id}/items` |
+| Health | `GET /api/healthz` |
+| Auth | `POST /api/auth/login` |
+| Suppliers | `GET /api/suppliers` · `GET /api/suppliers/{id}` · `POST /api/suppliers` |
+| Materials | `GET /api/materials` · `GET /api/materials/{id}` · `POST /api/materials` |
+| Movements | `GET /api/stock/movements` · `POST /api/stock/movements` |
+| Alerts | `GET /api/alerts` · `POST /api/alerts/{id}/resolve` |
+| Stocktaking | `GET/POST /api/stocktaking` · `GET /api/stocktaking/{id}` · `GET/POST /api/stocktaking/{id}/items` · `POST /api/stocktaking/{id}/confirm` |
 | Reports | `GET /api/reports/monthly` |
-| Users | `GET/POST /api/users` · `DELETE /api/users/{id}` *(Admin only)* |
+| Users | `GET /api/users` · `PATCH /api/users/{id}/password` · `POST /api/users` *(Admin only)* |
 
 ## License
 
