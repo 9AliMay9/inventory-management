@@ -1,6 +1,8 @@
 package main
 
 import (
+	static "inventory-management"
+
 	"log"
 	"net/http"
 
@@ -58,6 +60,7 @@ func main() {
 		reportHandler,
 		userHandler,
 		jwtMgr,
+		static.StaticFiles,
 	)
 
 	log.Printf("server started on: %s", cfg.ServerPort)

@@ -1,7 +1,11 @@
 package router
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -19,6 +23,7 @@ func NewRouter(
 	reportHandler *handler.ReportHandler,
 	userHandler *handler.UserHandler,
 	jwtManager *middleware.JWTManager,
+	staticFiles embed.FS,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -39,6 +44,7 @@ func NewRouter(
 	r.Get("/api/alerts", alertHandler.ListAlerts)
 	r.Get("/api/stocktaking", stocktakingHandler.ListStocktaking)
 	r.Get("/api/stocktaking/{id}", stocktakingHandler.GetByID)
+	r.Get("/api/stocktaking/{id}/items", stocktakingHandler.GetItems)
 	r.Get("/api/reports/monthly", reportHandler.GetMonthlyReport)
 
 	r.Group(func(protected chi.Router) {
@@ -62,8 +68,25 @@ func NewRouter(
 		adminOnly.Use(jwtManager.Middleware)
 		adminOnly.Use(middleware.RequireRole("admin"))
 		adminOnly.Post("/api/users", userHandler.CreateUser)
-		adminOnly.Patch("/api/users/{id}/role", userHandler.UpdateRole)
 	})
+
+	fsys, _ := fs.Sub(staticFiles, "web/dist")
+	fileServer := http.FileServer(http.FS(fsys))
+	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/")
+		if name == "" {
+			name = "index.html"
+		}
+		f, err := fsys.Open(name)
+		if err == nil {
+			f.Close()
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+		r2 := r.Clone(r.Context())
+		r2.URL = r.URL.ResolveReference(&url.URL{Path: "/"})
+		fileServer.ServeHTTP(w, r2)
+	}))
 
 	return r
 }

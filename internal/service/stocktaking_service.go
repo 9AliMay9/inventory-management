@@ -164,3 +164,10 @@ func (s *StocktakingService) GetByID(ctx context.Context, id int64) (repository.
 	}
 	return item, nil
 }
+
+func (s *StocktakingService) ListItems(
+	ctx context.Context,
+	stocktakingID int64,
+) ([]repository.StocktakingItem, error) {
+	return s.q.ListStocktakingItems(ctx, stocktakingID)
+}

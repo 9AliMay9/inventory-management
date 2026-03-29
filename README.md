@@ -1,144 +1,106 @@
-# 库存管理系统
+# Inventory Management System
 
-基于 Go 实现的库存管理后端系统，使用 Chi 路由、sqlc 类型安全查询、PostgreSQL 数据库与 golang-migrate 迁移管理。
+A full-stack inventory management application — Go backend and React frontend shipped as a **single binary** via `go:embed`. No separate frontend deployment required.
 
----
+![Login page](docs/images/login-theme-orange.png)
 
-## 技术栈
+## Screenshots
 
-| 组件                                                          | 版本    |
-| ----------------------------------------------------------- | ----- |
-| Go                                                          | 1.26+ |
-| PostgreSQL                                                  | 14+   |
-| [Chi](https://github.com/go-chi/chi)                        | v5    |
-| [sqlc](https://sqlc.dev)                                    | v1.30 |
-| [golang-migrate](https://github.com/golang-migrate/migrate) | v4    |
-| [golang-jwt](https://github.com/golang-jwt/jwt)             | v5    |
+### Dashboard
+![Dashboard](docs/images/dashboard-page.png)
 
----
+### Materials
+![Materials page](docs/images/materials-page.png)
 
-## 功能模块
+### Stock Movements
+![Movements page](docs/images/movements-page.png)
 
-- **认证**：JWT 登录，基于角色的访问控制（admin / staff）
-- **供货商管理**：新增、查询供货商
-- **物料管理**：新增、查询，支持按名称、分类、供货商复合过滤
-- **出入库管理**：入库 / 出库 / 调整，库存联动，支持按物料、类型、日期范围过滤
-- **预警系统**：低库存 / 高库存自动预警，支持手动解决
-- **库存盘点**：创建盘点单、录入明细、确认盘点，确认后触发预警检查
-- **月底结存**：按年月聚合出入库报表
-- **用户管理**：创建用户、查询用户列表、修改角色、修改密码
+## Tech Stack
 
----
+**Backend**
+- Go 1.26+ · [chi v5](https://github.com/go-chi/chi) · PostgreSQL (pgx/v5) · JWT (golang-jwt/v5) · godotenv · golang-migrate
 
-## 快速启动
+**Frontend**
+- React 19 · TypeScript 5.9 · Vite 8 · Tailwind CSS v4 · shadcn/ui · React Router v7 · Zustand v5 · react-i18next · Axios · lucide-react
 
-### 1. 环境依赖
+## Key Features
 
-- Go 1.22+
-- PostgreSQL 14+
-- [golang-migrate CLI](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
-- [sqlc CLI](https://docs.sqlc.dev/en/latest/overview/install.html)（仅在修改查询时需要）
+- **Single binary deployment** — `pnpm build` + `go build`; the Go binary embeds and serves the entire React SPA
+- **3 color themes** — Orange (default) / Mint Green / Asphalt Gray; persisted to `localStorage`, applied synchronously before React mounts (no flash)
+- **Bilingual UI** — English / Chinese toggle, default English, persisted to `localStorage`
+- **JWT auth + protected routes** — redirect to `/login` when unauthenticated
+- **Role-based access** — Admin (full write access) / Staff (read-only)
+- **Local-scroll data tables** — each page owns its scroll container; `<thead>` stays sticky inside
+- **Full business coverage** — Dashboard · Suppliers · Materials · Stock Movements · Alerts · Stocktaking · Monthly Reports · User Management
 
-### 2. 配置
-
-```bash
-cp .env.example .env
-```
-
-编辑 `.env`，填写数据库连接信息和 JWT 密钥：
+## Project Structure
 
 ```
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=inventory
-DB_SSLMODE=disable
-JWT_SECRET=your_secret_key
-SERVER_PORT=8080
-```
-
-### 3. 初始化数据库
-
-```bash
-# 创建数据库（在 psql 中执行）
-CREATE DATABASE inventory;
-
-# 运行迁移（含建表与种子数据）
-make migrate-up
-```
-
-### 4. 启动服务
-
-```bash
-make run
-```
-
-服务默认监听 `http://localhost:8080`。
-
----
-
-## 主要 API
-
-| 方法 | 路径 | 说明 | 鉴权 |
-|------|------|------|------|
-| POST | `/api/auth/login` | 登录获取 JWT | 无 |
-| GET | `/api/suppliers` | 供货商列表 | 无 |
-| GET | `/api/suppliers/{id}` | 供货商详情 | 无 |
-| POST | `/api/suppliers` | 新增供货商 | 登录 |
-| GET | `/api/materials` | 物料列表（支持过滤） | 无 |
-| GET | `/api/materials/{id}` | 物料详情 | 无 |
-| POST | `/api/materials` | 新增物料 | 登录 |
-| GET | `/api/stock/movements` | 出入库记录（支持过滤） | 无 |
-| POST | `/api/stock/movements` | 新增出入库记录 | 登录 |
-| GET | `/api/alerts` | 未解决预警列表 | 无 |
-| POST | `/api/alerts/{id}/resolve` | 解决预警 | 登录 |
-| GET | `/api/stocktaking` | 盘点单列表 | 无 |
-| GET | `/api/stocktaking/{id}` | 盘点单详情 | 无 |
-| POST | `/api/stocktaking` | 创建盘点单 | 登录 |
-| POST | `/api/stocktaking/{id}/items` | 录入盘点明细 | 登录 |
-| POST | `/api/stocktaking/{id}/confirm` | 确认盘点 | 登录 |
-| GET | `/api/reports/monthly` | 月底结存报表 | 无 |
-| GET | `/api/users` | 用户列表 | 登录 |
-| POST | `/api/users` | 创建用户 | admin |
-| PATCH | `/api/users/{id}/role` | 修改用户角色 | admin |
-| PATCH | `/api/users/{id}/password` | 修改密码（本人或 admin） | 登录 |
-
-### 复合过滤示例
-
-```
-GET /api/materials?name=螺&category=五金&supplier_id=1
-GET /api/stock/movements?material_id=1&movement_type=IN&from=2026-03-01&to=2026-03-31
-```
-
----
-
-## 项目结构
-
-```
-.
-├── cmd/server/          # 程序入口
+inventory-management/
+├── cmd/server/main.go      # Entry point
 ├── internal/
-│   ├── config/          # 配置加载
-│   ├── db/              # 数据库连接
-│   ├── handler/         # HTTP 处理器与响应 DTO
-│   ├── middleware/       # JWT 鉴权与 RBAC 中间件
-│   ├── repository/      # sqlc 生成的数据访问层
-│   ├── router/          # 路由注册
-│   └── service/         # 业务逻辑层
-├── migrations/          # 数据库迁移文件
-├── queries/             # sqlc SQL 查询源文件
-├── Makefile
-├── sqlc.yaml
-└── .env.example
+│   ├── handler/            # HTTP handlers
+│   ├── middleware/         # JWT auth, CORS, logger
+│   ├── model/              # Domain structs
+│   ├── repository/         # PostgreSQL queries (pgx/v5)
+│   └── service/            # Business logic
+├── migrations/             # SQL migration files
+├── docs/images/            # README screenshots
+├── embed.go                # go:embed all:web/dist
+├── web/                    # Frontend source
+│   ├── src/
+│   │   ├── components/     # App shell + shadcn/ui components
+│   │   ├── pages/          # Route-level page components
+│   │   ├── i18n/           # en / zh-CN translation files
+│   │   └── store/          # Zustand auth store
+│   └── vite.config.ts
+└── go.mod
 ```
 
----
+## Quick Start
 
-## 开发说明
-
-修改 `queries/` 下的 SQL 文件后，重新生成 repository 层：
+**Prerequisites:** Go 1.26+, Node.js 20+ / pnpm 9+, PostgreSQL 15+
 
 ```bash
-make sqlc
+# 1. Clone and configure
+git clone https://github.com/your-username/inventory-management.git
+cd inventory-management
+cp .env.example .env        # set DB_DSN, JWT_SECRET, PORT, etc.
+
+# 2. Run database migrations
+migrate -path ./migrations -database "$DATABASE_URL" up
+
+# 3. Build frontend
+cd web && pnpm install && pnpm build && cd ..
+
+# 4. Build and run
+go build -o inventory-management .
+./inventory-management      # serves on http://localhost:8080
 ```
+
+## Development Mode
+
+```bash
+# Terminal 1 — backend (live reload optional with air)
+go run ./cmd/server/main.go
+
+# Terminal 2 — frontend dev server (proxies /api → :8080)
+cd web && pnpm dev
+```
+
+## API Overview
+
+| Group | Endpoints |
+|-------|-----------|
+| Auth | `POST /api/auth/login` · `POST /api/auth/logout` |
+| Suppliers | `GET/POST /api/suppliers` · `PUT/DELETE /api/suppliers/{id}` |
+| Materials | `GET/POST /api/materials` · `GET/PUT/DELETE /api/materials/{id}` |
+| Movements | `GET/POST /api/movements` |
+| Alerts | `GET /api/alerts` · `PATCH /api/alerts/{id}/resolve` |
+| Stocktaking | `GET/POST /api/stocktaking` · `GET /api/stocktaking/{id}` · `GET/POST /api/stocktaking/{id}/items` |
+| Reports | `GET /api/reports/monthly` |
+| Users | `GET/POST /api/users` · `DELETE /api/users/{id}` *(Admin only)* |
+
+## License
+
+MIT

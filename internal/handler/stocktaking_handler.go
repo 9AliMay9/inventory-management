@@ -164,3 +164,23 @@ func (h *StocktakingHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, toStocktakingResp(item))
 }
+
+func (h *StocktakingHandler) GetItems(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "bad request")
+		return
+	}
+
+	items, err := h.svc.ListItems(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	resp := make([]stocktakingItemResp, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, toStocktakingItemResp(item))
+	}
+	writeJSON(w, http.StatusOK, resp)
+}

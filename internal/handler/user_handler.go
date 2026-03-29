@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 
 	"inventory-management/internal/middleware"
@@ -23,10 +24,6 @@ type createUserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
-}
-
-type updateUserRoleRequest struct {
-	Role string `json:"role"`
 }
 
 type updatePasswordRequest struct {
@@ -97,40 +94,6 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func (h *UserHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "bad request")
-		return
-	}
-
-	var req updateUserRoleRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "bad request")
-		return
-	}
-
-	if !isValidRole(req.Role) {
-		writeError(w, http.StatusBadRequest, "invalid role")
-		return
-	}
-
-	user, err := h.q.UpdateUserRole(r.Context(), repository.UpdateUserRoleParams{
-		ID:   id,
-		Role: req.Role,
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, "not found")
-			return
-		}
-		writeError(w, http.StatusBadRequest, "invalid role")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, toUserResp(user))
-}
-
 func (h *UserHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	targetID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -195,7 +158,10 @@ func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false
 	}
-
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
 	errMsg := strings.ToLower(err.Error())
 	return strings.Contains(errMsg, "duplicate key") || strings.Contains(errMsg, "unique constraint")
 }
