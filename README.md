@@ -29,7 +29,7 @@ A full-stack inventory management application — Go backend and React frontend 
 - **3 color themes** — Orange (default) / Mint Green / Asphalt Gray; persisted to `localStorage`, applied synchronously before React mounts (no flash)
 - **Bilingual UI** — English / Chinese toggle, default English, persisted to `localStorage`
 - **JWT auth + protected routes** — redirect to `/login` when unauthenticated
-- **Role-based access** — Admin (full write access) / Staff (read-only)
+- **Role-based access** — Admin and Staff both have full business write access; only Admin can create new users
 - **Local-scroll data tables** — each page owns its scroll container; `<thead>` stays sticky inside
 - **Full business coverage** — Dashboard · Suppliers · Materials · Stock Movements · Alerts · Stocktaking · Monthly Reports · User Management
 
