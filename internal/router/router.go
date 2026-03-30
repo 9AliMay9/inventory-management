@@ -19,6 +19,7 @@ func NewRouter(
 	materialHandler *handler.MaterialHandler,
 	stockHandler *handler.StockHandler,
 	alertHandler *handler.AlertHandler,
+	alertFailureHandler *handler.AlertFailureHandler,
 	stocktakingHandler *handler.StocktakingHandler,
 	reportHandler *handler.ReportHandler,
 	userHandler *handler.UserHandler,
@@ -42,6 +43,7 @@ func NewRouter(
 
 	r.Get("/api/stock/movements", stockHandler.ListMovements)
 	r.Get("/api/alerts", alertHandler.ListAlerts)
+	r.Get("/api/alert-failures", alertFailureHandler.ListAlertFailures)
 	r.Get("/api/stocktaking", stocktakingHandler.ListStocktaking)
 	r.Get("/api/stocktaking/{id}", stocktakingHandler.GetByID)
 	r.Get("/api/stocktaking/{id}/items", stocktakingHandler.GetItems)

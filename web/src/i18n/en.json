@@ -95,7 +95,17 @@
     "filterName": "Search by name",
     "filterCategory": "Filter by category",
     "filterSupplier": "Supplier ID",
-    "empty": "No material data"
+    "empty": "No material data",
+    "validation": {
+      "codeRequired": "Material code is required",
+      "nameRequired": "Material name is required",
+      "unitRequired": "Unit is required",
+      "minStockInvalid": "min_stock must be a valid non-negative number",
+      "maxStockInvalid": "max_stock must be a valid positive number",
+      "quantityInvalid": "quantity must be a valid number",
+      "unitPriceInvalid": "unit_price must be a valid number",
+      "stockRangeInvalid": "min_stock must be less than max_stock"
+    }
   },
   "materialDetail": {
     "title": "Material Detail",
@@ -151,6 +161,12 @@
   "alerts": {
     "title": "Alerts",
     "description": "Only unresolved alerts are shown. Resolved alerts are removed from the list immediately.",
+    "viewFailures": "System Logs",
+    "failuresTitle": "Alert System Logs",
+    "failuresDescription": "Records of alert creation failures. Business alerts are not affected.",
+    "failureError": "Error Detail",
+    "failuresEmpty": "No failure records",
+    "backToAlerts": "Back to alerts",
     "resolve": "Resolve",
     "resolving": "Resolving",
     "resolved": "Resolved",

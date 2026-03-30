@@ -19,6 +19,14 @@ type Alert struct {
 	ResolvedAt sql.NullTime `json:"resolved_at"`
 }
 
+type AlertFailure struct {
+	ID         int64         `json:"id"`
+	MaterialID sql.NullInt64 `json:"material_id"`
+	AlertType  string        `json:"alert_type"`
+	Error      string        `json:"error"`
+	CreatedAt  time.Time     `json:"created_at"`
+}
+
 type Material struct {
 	ID            int64          `json:"id"`
 	Code          string         `json:"code"`

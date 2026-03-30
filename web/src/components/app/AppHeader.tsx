@@ -9,6 +9,7 @@ const titleMap: Record<string, string> = {
   '/materials': 'nav.materials',
   '/stock/movements': 'nav.movements',
   '/alerts': 'nav.alerts',
+  '/alert-failures': 'alerts.failuresTitle',
   '/stocktaking': 'nav.stocktaking',
   '/reports/monthly': 'nav.reports',
   '/users': 'nav.users',

@@ -48,6 +48,14 @@ export interface Alert {
   resolved_at: string | null
 }
 
+export interface AlertFailure {
+  id: number
+  material_id: number | null
+  alert_type: 'LOW_STOCK' | 'OVER_STOCK' | string
+  error: string
+  created_at: string
+}
+
 export interface Stocktaking {
   id: number
   period: string

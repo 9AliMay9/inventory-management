@@ -46,6 +46,7 @@ func main() {
 	materialHandler := handler.NewMaterialHandler(q)
 	stockHandler := handler.NewStockHandler(stockSvc)
 	alertHandler := handler.NewAlertHandler(q)
+	alertFailureHandler := handler.NewAlertFailureHandler(q)
 	stocktakingHandler := handler.NewStocktakingHandler(stocktakingSvc)
 	reportHandler := handler.NewReportHandler(q)
 	userHandler := handler.NewUserHandler(q)
@@ -56,6 +57,7 @@ func main() {
 		materialHandler,
 		stockHandler,
 		alertHandler,
+		alertFailureHandler,
 		stocktakingHandler,
 		reportHandler,
 		userHandler,

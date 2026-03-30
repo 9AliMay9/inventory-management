@@ -148,7 +148,12 @@ func tryCreateAlerts(
 			Message:    fmt.Sprintf("material %s low stock: current %.2f, min %.2f", material.Code, newQty, minStock),
 		})
 		if alertErr != nil {
-			log.Printf("create low stock alert failed for material %d: %v", material.ID, alertErr)
+			log.Printf("create low_stock alert failed for material %d: %v", material.ID, alertErr)
+			_, _ = q.CreateAlertFailure(ctx, repository.CreateAlertFailureParams{
+				MaterialID: sql.NullInt64{Int64: material.ID, Valid: true},
+				AlertType:  "LOW_STOCK",
+				Error:      alertErr.Error(),
+			})
 		}
 	}
 
@@ -160,6 +165,11 @@ func tryCreateAlerts(
 		})
 		if alertErr != nil {
 			log.Printf("create over stock alert failed for material %d: %v", material.ID, alertErr)
+			_, _ = q.CreateAlertFailure(ctx, repository.CreateAlertFailureParams{
+				MaterialID: sql.NullInt64{Int64: material.ID, Valid: true},
+				AlertType:  "OVER_STOCK",
+				Error:      alertErr.Error(),
+			})
 		}
 	}
 }

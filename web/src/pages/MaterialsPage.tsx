@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { AxiosError } from 'axios'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Boxes, Plus, Search } from 'lucide-react'
@@ -90,8 +91,46 @@ export default function MaterialsPage() {
     return () => clearTimeout(timer)
   }, [fetchMaterials])
 
+  function validateForm() {
+    if (!form.code.trim()) return t('materials.validation.codeRequired')
+    if (!form.name.trim()) return t('materials.validation.nameRequired')
+    if (!form.unit.trim()) return t('materials.validation.unitRequired')
+
+    const minStock = Number.parseFloat(form.min_stock)
+    if (Number.isNaN(minStock) || minStock < 0) {
+      return t('materials.validation.minStockInvalid')
+    }
+
+    const quantity = Number.parseFloat(form.quantity)
+    if (Number.isNaN(quantity)) {
+      return t('materials.validation.quantityInvalid')
+    }
+
+    const unitPrice = Number.parseFloat(form.unit_price)
+    if (Number.isNaN(unitPrice)) {
+      return t('materials.validation.unitPriceInvalid')
+    }
+
+    if (form.max_stock?.trim()) {
+      const maxStock = Number.parseFloat(form.max_stock)
+      if (Number.isNaN(maxStock) || maxStock <= 0) {
+        return t('materials.validation.maxStockInvalid')
+      }
+      if (minStock >= maxStock) {
+        return t('materials.validation.stockRangeInvalid')
+      }
+    }
+
+    return null
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const validationError = validateForm()
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
     setSubmitting(true)
     try {
       await createMaterial({
@@ -110,8 +149,9 @@ export default function MaterialsPage() {
       setForm(initialForm)
       fetchMaterials()
       toast.success(t('materials.createSuccess'))
-    } catch {
-      toast.error(t('common.error'))
+    } catch (err) {
+      const error = err as AxiosError<{ error?: string }>
+      toast.error(error.response?.data?.error ?? t('common.error'))
     } finally {
       setSubmitting(false)
     }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { AxiosError } from 'axios'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ShieldCheck, TriangleAlert } from 'lucide-react'
+import { Logs, ShieldCheck, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { listAlerts, resolveAlert } from '@/api/alerts'
 import EmptyState from '@/components/app/EmptyState'
@@ -57,7 +58,24 @@ export default function AlertsPage() {
   }
 
   return (
-    <PageSection title={t('alerts.title')} description={t('alerts.description')} icon={TriangleAlert}>
+    <PageSection
+      title={t('alerts.title')}
+      description={t('alerts.description')}
+      icon={TriangleAlert}
+      action={
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="border-primary/25 bg-primary/8 text-primary hover:border-primary/35 hover:bg-primary/14 hover:text-primary"
+        >
+          <Link to="/alert-failures">
+            <Logs className="mr-2 h-4 w-4" />
+            {t('alerts.viewFailures')}
+          </Link>
+        </Button>
+      }
+    >
       {loading ? (
         <AlertsSkeleton />
       ) : error ? (

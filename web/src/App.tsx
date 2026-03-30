@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import ProtectedRoute from '@/components/app/ProtectedRoute'
 import AuthLayout from '@/layouts/AuthLayout'
 import AppLayout from '@/layouts/AppLayout'
+import AlertFailuresPage from '@/pages/AlertFailuresPage'
 import AlertsPage from '@/pages/AlertsPage'
 import DashboardPage from '@/pages/DashboardPage'
 import LoginPage from '@/pages/LoginPage'
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
       { path: 'materials/:id', element: <MaterialDetailPage /> },
       { path: 'stock/movements', element: <MovementsPage /> },
       { path: 'alerts', element: <AlertsPage /> },
+      { path: 'alert-failures', element: <AlertFailuresPage /> },
       { path: 'stocktaking', element: <StocktakingPage /> },
       { path: 'stocktaking/:id', element: <StocktakingDetailPage /> },
       { path: 'reports/monthly', element: <MonthlyReportPage /> },

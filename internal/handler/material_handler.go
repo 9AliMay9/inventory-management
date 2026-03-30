@@ -94,6 +94,39 @@ func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if req.Code == "" || req.Name == "" || req.Unit == "" {
+		writeError(w, http.StatusBadRequest, "code, name and unit are required")
+		return
+	}
+
+	minStock, err := strconv.ParseFloat(req.MinStock, 64)
+	if err != nil || minStock < 0 {
+		writeError(w, http.StatusBadRequest, "min_stock must be a valid non-negative number")
+		return
+	}
+
+	if _, err = strconv.ParseFloat(req.Quantity, 64); err != nil {
+		writeError(w, http.StatusBadRequest, "quantity must be a valid number")
+		return
+	}
+
+	if _, err = strconv.ParseFloat(req.UnitPrice, 64); err != nil {
+		writeError(w, http.StatusBadRequest, "unit_price must be a valid number")
+		return
+	}
+
+	if req.MaxStock != "" {
+		maxStock, err := strconv.ParseFloat(req.MaxStock, 64)
+		if err != nil || maxStock <= 0 {
+			writeError(w, http.StatusBadRequest, "max_stock must be a valid positive number")
+			return
+		}
+		if minStock >= maxStock {
+			writeError(w, http.StatusBadRequest, "min_stock must be less than max_stock")
+			return
+		}
+	}
+
 	item, err := h.q.CreateMaterial(r.Context(), repository.CreateMaterialParams{
 		Code:          req.Code,
 		Name:          req.Name,
